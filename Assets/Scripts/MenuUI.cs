@@ -1,33 +1,63 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.SceneManagement;
-#if UNITY_EDITOR
-using UnityEditor;
-#endif
+using System.IO;
+using UnityEngine.UI;
+
 
 public class MenuUI : MonoBehaviour
 {
+    public static MenuUI Instance;
 
-    // Start is called before the first frame update
-    void Start()
+    public string playerName;
+    public int highscore;
+
+    public Text HighScoreText;
+
+    private void Awake()
     {
-        
-    }
-    
-    public void StartNew()
-    {
-        SceneManager.LoadScene(1);
+        if (Instance != null)
+        {
+            Destroy(gameObject);
+            return;
+        }
+        Instance = this;
+        DontDestroyOnLoad(gameObject);
+        LoadPlayer();
     }
 
-    public void Exit()
+       
+    [System.Serializable]
+    class SaveData
     {
-        MainManager.Instance.SavePlayer();
-#if UNITY_EDITOR
-        EditorApplication.ExitPlaymode();
-#else
-        Application.Quit();
-#endif
+        public string playerName;
+        public int highscore;
+    }
+
+    public void SavePlayer()
+    {
+        SaveData data = new SaveData();
+        data.playerName = playerName;
+        data.highscore = highscore;
+
+        string json = JsonUtility.ToJson(data);
+
+        File.WriteAllText(Application.persistentDataPath + "/savefile.json", json);
+    }
+
+    public void LoadPlayer()
+    {
+        string path = Application.persistentDataPath + "/savefile.json";
+        if (File.Exists(path))
+        {
+            string json = File.ReadAllText(path);
+            SaveData data = JsonUtility.FromJson<SaveData>(json);
+
+            playerName = data.playerName;
+            highscore = data.highscore;
+
+            HighScoreText.text = $"HighScore : {playerName}{highscore}";
+        }
     }
 
 
